@@ -27,11 +27,17 @@ async function deliver(payload, participantIds) {
 const participantIdsOf = (group) => group.participants.map(idOf);
 
 async function groupCreated(group) {
-  await deliver({ type: "group:created", data: group }, participantIdsOf(group));
+  await deliver(
+    { type: "group:created", data: group },
+    participantIdsOf(group),
+  );
 }
 
 async function groupUpdated(group) {
-  await deliver({ type: "group:updated", data: group }, participantIdsOf(group));
+  await deliver(
+    { type: "group:updated", data: group },
+    participantIdsOf(group),
+  );
 }
 
 async function groupDeleted({ conversationId, participantIds }) {
