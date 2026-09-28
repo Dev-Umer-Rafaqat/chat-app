@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { api } from "../services/api";
 import { AuthContext } from "./auth-context";
 
@@ -29,8 +29,25 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // Re-read the user (and role) from the server — the server is the source
+  // of truth.
+  const refreshUser = useCallback(async () => {
+    try {
+      setUser(await api.getMe());
+    } catch (error) {
+      // Keep the current session on transient failures; a disabled account
+      // is rejected by the server on its next request anyway.
+      console.error("Failed to refresh user:", error);
+    }
+  }, []);
+
+  // UI convenience only. Every admin action is re-checked by the backend.
+  const isAdmin = user?.role === "admin";
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, isAdmin, login, register, logout, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

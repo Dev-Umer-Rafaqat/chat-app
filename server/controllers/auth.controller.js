@@ -29,7 +29,12 @@ const logout = asyncHandler(async (req, res) => {
 const getMe = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
-    data: { id: req.user._id, name: req.user.name, email: req.user.email },
+    data: {
+      id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+    },
   });
 });
 

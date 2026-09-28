@@ -1,6 +1,7 @@
 const messageService = require("../services/message.service");
 const conversationService = require("../services/conversation.service");
 const connectionManager = require("./connection.manager");
+const handleGroupEvent = require("./group.handler");
 
 function send(ws, payload) {
   if (ws && ws.readyState === ws.OPEN) {
@@ -23,6 +24,14 @@ async function handleMessage(ws, senderId, raw) {
   }
 
   const { type, conversationId, data = {} } = parsed;
+
+  /*
+   * Admin-only group management (group:create | group:update | group:delete).
+   * Authorization is enforced inside the handler from the database.
+   */
+  if (typeof type === "string" && type.startsWith("group:")) {
+    return handleGroupEvent(ws, senderId, { type, conversationId, data });
+  }
 
   /*
    * User opened a conversation.

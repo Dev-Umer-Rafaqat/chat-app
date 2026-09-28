@@ -32,6 +32,8 @@ export default function useChatRealtime({
   activeConversation,
   setMessages,
   setNotifications,
+  setConversations,
+  setActiveConversation,
 }) {
   const handleWsEvent = useCallback(
     (event) => {
@@ -66,11 +68,57 @@ export default function useChatRealtime({
         );
       }
 
+      /*
+       * Admin group changes, broadcast by the server after it has
+       * verified the admin's role and written to the database.
+       */
+      if (event.type === "group:created") {
+        const group = event.data;
+        setConversations((prev) =>
+          prev.some((item) => String(item._id) === String(group._id))
+            ? prev
+            : [group, ...prev],
+        );
+      }
+
+      if (event.type === "group:updated") {
+        const group = event.data;
+        setConversations((prev) =>
+          prev.map((item) =>
+            String(item._id) === String(group._id) ? group : item,
+          ),
+        );
+        setActiveConversation((prev) =>
+          prev && String(prev._id) === String(group._id) ? group : prev,
+        );
+      }
+
+      if (event.type === "group:deleted") {
+        const deletedId = String(event.data.conversationId);
+        setConversations((prev) =>
+          prev.filter((item) => String(item._id) !== deletedId),
+        );
+        setNotifications((prev) =>
+          prev.filter((item) => String(item.conversationId) !== deletedId),
+        );
+        if (String(activeConversation?._id || "") === deletedId) {
+          setActiveConversation(null);
+          setMessages([]);
+        }
+      }
+
       if (event.type === "error") {
         console.error("WebSocket error event:", event.data?.message);
       }
     },
-    [activeConversation, setMessages, setNotifications, user],
+    [
+      activeConversation,
+      setMessages,
+      setNotifications,
+      setConversations,
+      setActiveConversation,
+      user,
+    ],
   );
 
   const {

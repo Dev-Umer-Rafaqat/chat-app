@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { ROLES, ROLE_VALUES } = require("../config/roles");
 
 const userSchema = new mongoose.Schema(
   {
@@ -42,6 +43,15 @@ const userSchema = new mongoose.Schema(
     accountDisabled: {
       type: Boolean,
       default: false,
+    },
+
+    // Authorization role. The database is the only source of truth:
+    // it is never read from a request body or from the JWT payload.
+    role: {
+      type: String,
+      enum: ROLE_VALUES,
+      default: ROLES.USER,
+      index: true,
     },
 
     verificationRequired: {

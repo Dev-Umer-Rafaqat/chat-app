@@ -9,7 +9,7 @@ import useChatRealtime, {
 } from "../hooks/chat/useChatRealtime";
 
 function Chat() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -26,6 +26,8 @@ function Chat() {
     activeConversation,
     setMessages,
     setNotifications,
+    setConversations,
+    setActiveConversation,
   });
 
   useEffect(() => {
@@ -164,7 +166,12 @@ function Chat() {
   const handleCreateGroup = async (name, participantIds) => {
     try {
       const group = await api.createGroup(name, participantIds);
-      setConversations((prev) => [group, ...prev]);
+      // The server also broadcasts group:created; de-duplicate by id.
+      setConversations((prev) =>
+        prev.some((item) => String(item._id) === String(group._id))
+          ? prev
+          : [group, ...prev],
+      );
       setActiveConversation(group);
       setMessages([]);
       return group;
@@ -188,6 +195,7 @@ function Chat() {
       messages={loadingMessages ? [] : messages}
       currentUserId={user?._id || user?.id}
       currentUser={user}
+      isAdmin={isAdmin}
       knownUsers={[...(activeConversation?.participants || []), ...users]}
       connectionStatus={connectionStatus}
       notifications={notifications}
